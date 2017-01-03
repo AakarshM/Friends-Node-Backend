@@ -19,6 +19,10 @@ app.use(bodyParser.json());
 
 var body = {};  //Body when someone has won.
 
+app.get('/', function (req, res) {
+   res.send("Main root of software");
+
+});
 
 app.post('/todos', groupAuthenticate, function (req, res) {
     var group = req.group; //group the user belongs to.
@@ -39,16 +43,17 @@ app.post('/todos', groupAuthenticate, function (req, res) {
 });
 
 
-app.get('/todos', authenticate, function (req, res) {
+app.get('/todos', groupAuthenticate, function (req, res) {
+    //var group = req.group;
 
-    var getTodos = db.todo.find({_creator: req.user._id}, function (err, result) { //error, result
+    var getTodos = db.todo.find({groupID: req.group._id}, function (err, result) { //error, result
 
 
         if (err) {
             return res.status(400).send(error);
         }
 
-        res.json(result);
+        res.json(result); //result is the actual todos Array.
 
     });
 
@@ -201,7 +206,7 @@ app.post('/users/login', function (req, res) {
 
     db.user.findByCredentials(email, password).then((user) => {
 
-        return user.generateAuthToken().then((token) => {
+         user.generateAuthToken().then((token) => {
             res.header('x-auth', token).send(user);
 
         });
@@ -337,24 +342,25 @@ app.post('/groups/join/:id', authenticate, function (req, res) {
 
 
 app.get('/groups', groupAuthenticate, function (req, res) {
+    if(req.noGroupFound == true){
+        var bodyIfNoGroup = {group: false};
+        res.json(bodyIfNoGroup);
+
+    }
     res.json(req.group);
 
 });
 
-app.get('/groups/:groupID', authenticate, function (req, res) { //Info of any group
 
+app.get('/groups/scores', groupAuthenticate, function (req, res) {
 
-});
+    var id = req.group._id;
 
-
-app.get('/groups/:id/scores', groupAuthenticate, function (req, res) {
-
-    var id = req.params.id;
 
         db.group.findOne({_id: id}).then((groupFound) => {
             var membersArray = groupFound.members;
             Promise.all(membersArray.map((member) => {
-                return db
+                return db   ///NEED THE RETURN HERE --> applies the db..... to each member.
                     .doneTodo
                     .find({'victor._id': member._id})
                     .then((userVictories) => {
@@ -387,6 +393,9 @@ app.get('/groups/:id/scores', groupAuthenticate, function (req, res) {
             })
 
         });
+
+
+    //METHOD 2:
 
 
 

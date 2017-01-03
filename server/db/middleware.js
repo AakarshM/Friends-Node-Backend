@@ -37,7 +37,11 @@ var groupAuthenticate = function (req, res, next) {
 
         db.group.findbyID(result._id.toString()).then((group) =>{
 
+            if(!group){
+                req.noGroupFound = true;
+            }
 
+            req.noGroupFound = false;
             req.user = result;  //the result is the user from findByToken
             req.group = group;
             req.token = token;
