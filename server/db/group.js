@@ -24,9 +24,7 @@ GroupSchema = mongoose.Schema({
 
 GroupSchema.statics.findbyID = function (id) { //Find the group user is involved in.
     var Group = this;
-    return Group.findOne({'members._id':id}).then((groupUserIsIn) =>{
-        return groupUserIsIn;
-    });
+    return Group.findOne({'members._id':id});
 
 };
 

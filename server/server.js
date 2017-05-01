@@ -19,6 +19,10 @@ app.use(bodyParser.json());
 
 var body = {};  //Body when someone has won.
 
+app.get('/tokens', function (req, res) {
+	
+});
+
 app.get('/', function (req, res) {
    res.send("Main root of software");
 
@@ -331,12 +335,12 @@ app.post('/groups/join/:id', authenticate, function (req, res) {
     var userEmail = req.user.email;
     console.log(groupIDToJoin + userEmail + userID);
 
-    db.group.addUserToGroup(groupIDToJoin, userID, userEmail).then(() => {
+    db.group.addUserToGroup(groupIDToJoin, userID, userEmail); /*.then(() => {
         res.status(200).send();
     }).catch((e) => {
         res.status(400).send()
     });
-
+*/
 
 });
 
