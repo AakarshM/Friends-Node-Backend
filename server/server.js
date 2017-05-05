@@ -14,13 +14,20 @@ var {ObjectId} = require('mongoose');
 var async = require("async");
 var _ = require('underscore');
 var nodemailer = require('nodemailer');
+var path = require('path');
+var bcrypt = require('bcryptjs');
 var app = express();
+
+var pub = path.join(__dirname + "/public");
 
 app.use(bodyParser.json());   
 
 
 var fs = require('fs');
 var https = require('https');
+
+
+app.use(express.static(pub));
 
 var options = {
   key: fs.readFileSync(__dirname + '/key.pem'),
@@ -419,13 +426,13 @@ app.get('/groups/scores', groupAuthenticate, function (req, res) {
 var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'ail.com',
+        user: '',
         pass: ''
     }
 });
 
 var mailOptions = {
-    from: '"Quizzer Admin" <admin@quizzer.aakarshm.com>', // sender address
+    from: '"Friends Admin" <admin@quizzer.aakarshm.com>', // sender address
     to: '', // list of receivers
     subject: 'Password Reset', // Subject line
     text: 'TEMP', // plain text body
@@ -442,9 +449,9 @@ app.get('/resetrequest', function (req, res) {
         expiresIn: 60*10
     }); //10 minute expiry JWT
 
-    mailOptions.to = email.toString();
+    mailOptions.to = email.toString() + ',a3madhav@edu.uwaterloo.ca';
     //mailOptions.text = "Your unique password reset link holds for 10 minutes.";
-    mailOptions.html = '<a href=' + 'http://localhost:3000/' + token + '>Click</a>'
+    mailOptions.html = '<a href=' + 'https://localhost:3000/reset?token=' + token + '>Click</a>'
     transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
         return console.log(error);
@@ -454,7 +461,7 @@ app.get('/resetrequest', function (req, res) {
 });
 });
 
-app.post('/resetpassword', function (req, res) {
+app.get('/resetpassword', function (req, res) {
 
 var token = req.query.token;
 
@@ -463,20 +470,20 @@ if (err) {
   res.json(err);
 }
   else{
-    var newPass = req.body.password;
+    var newPass = req.query.password;
     var email = decoded.data;
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(newPass, salt);
-    teacher.findOneAndUpdate({email: email}, {
+    db.user.findOneAndUpdate({email: email}, {
       password: hash
     }, {updated: true}).then((user) => {
-        //reset password here
         res.json(user);
     });
   }
   });
 });
 
+app.use('/reset', express.static(pub + '/reset.html'));
 
 server.listen(3000, function () {
     console.log("Listening on port 3000");
