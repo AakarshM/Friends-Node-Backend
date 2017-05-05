@@ -13,20 +13,22 @@ var jwt = require('jsonwebtoken');
 var {ObjectId} = require('mongoose');
 var async = require("async");
 var _ = require('underscore');
+var nodemailer = require('nodemailer');
 var app = express();
 
-app.use(bodyParser.json());
+app.use(bodyParser.json());   
+
 
 var fs = require('fs');
 var https = require('https');
 
+var options = {
+  key: fs.readFileSync(__dirname + '/key.pem'),
+  cert: fs.readFileSync(__dirname + '/cert.pem')
+};
+
 var server = https.createServer(options, app);
 
-
-var options = {
-  key: fs.readFileSync('./key.pem'),
-  cert: fs.readFileSync('./cert.pem')
-};
 
 var body = {};  //Body when someone has won.
 
@@ -410,10 +412,69 @@ app.get('/groups/scores', groupAuthenticate, function (req, res) {
         });
 
 
-    //METHOD 2:
+});
 
+//Create SMTP settings
 
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'ail.com',
+        pass: ''
+    }
+});
 
+var mailOptions = {
+    from: '"Quizzer Admin" <admin@quizzer.aakarshm.com>', // sender address
+    to: '', // list of receivers
+    subject: 'Password Reset', // Subject line
+    text: 'TEMP', // plain text body
+    html: '<a>TEMP</a>' // html body
+};
+
+app.get('/resetrequest', function (req, res) {
+    var email = req.query.email;
+
+    var token = jwt.sign({
+      data: email
+    },
+    'friendreset123', {
+        expiresIn: 60*10
+    }); //10 minute expiry JWT
+
+    mailOptions.to = email.toString();
+    //mailOptions.text = "Your unique password reset link holds for 10 minutes.";
+    mailOptions.html = '<a href=' + 'http://localhost:3000/' + token + '>Click</a>'
+    transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+        return console.log(error);
+    }
+  //  console.log();
+    res.json('Message %s sent: %s', info.messageId, info.response);
+});
+});
+
+app.post('/resetpassword', function (req, res) {
+
+var token = req.query.token;
+
+  jwt.verify(token, 'friendreset123', function(err, decoded) {
+if (err) {
+  res.json(err);
+}
+  else{
+    var newPass = req.body.password;
+    var email = decoded.data;
+    var salt = bcrypt.genSaltSync(10);
+    var hash = bcrypt.hashSync(newPass, salt);
+    teacher.findOneAndUpdate({email: email}, {
+      password: hash
+    }, {updated: true}).then((user) => {
+        //reset password here
+        res.json(user);
+    });
+  }
+  });
 });
 
 
