@@ -14,8 +14,19 @@ var {ObjectId} = require('mongoose');
 var async = require("async");
 var _ = require('underscore');
 var app = express();
+
 app.use(bodyParser.json());
 
+var fs = require('fs');
+var https = require('https');
+
+var server = https.createServer(options, app);
+
+
+var options = {
+  key: fs.readFileSync('./key.pem'),
+  cert: fs.readFileSync('./cert.pem')
+};
 
 var body = {};  //Body when someone has won.
 
@@ -406,6 +417,6 @@ app.get('/groups/scores', groupAuthenticate, function (req, res) {
 });
 
 
-app.listen(3000, function () {
+server.listen(3000, function () {
     console.log("Listening on port 3000");
 });
